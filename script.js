@@ -2474,50 +2474,18 @@ function advance() {
 let petaraCelebrationAudio = null;
 function playSuccessCheer() {
   try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    if (!petaraCelebrationAudio) petaraCelebrationAudio = new AC();
-    const ctx = petaraCelebrationAudio;
-    ctx.resume().catch(() => {});
-    const start = ctx.currentTime + .02;
-    const sampleRate = ctx.sampleRate;
-    // Soft, layered applause: short filtered noise bursts.
-    const buffer = ctx.createBuffer(1, Math.round(sampleRate*.12), sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/sampleRate*33);
-    for (let i=0;i<35;i++) {
-      const src=ctx.createBufferSource();
-      const filter=ctx.createBiquadFilter();
-      const gain=ctx.createGain();
-      src.buffer=buffer;
-      filter.type="bandpass";
-      filter.frequency.value=850+(i%7)*210;
-      filter.Q.value=.75;
-      gain.gain.value=.038+(i%4)*.009;
-      src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
-      src.start(start+i*.044+Math.random()*.025);
+    if (petaraCelebrationAudio) {
+      petaraCelebrationAudio.pause();
+      petaraCelebrationAudio.currentTime = 0;
     }
-    // Several overlapping happy voices, pitched like a small cheering crowd.
-    const syllables=[0, .16, .31, .49, .66];
-    syllables.forEach((offset,k)=>{
-      for(let v=0;v<5;v++){
-        const osc=ctx.createOscillator();
-        const gain=ctx.createGain();
-        const filter=ctx.createBiquadFilter();
-        const t=start+offset+v*.018;
-        osc.type="sawtooth";
-        const base=205+v*36+k*13;
-        osc.frequency.setValueAtTime(base,t);
-        osc.frequency.exponentialRampToValueAtTime(base*1.23,t+.13);
-        filter.type="lowpass";filter.frequency.value=760+v*130;
-        gain.gain.setValueAtTime(.0001,t);
-        gain.gain.exponentialRampToValueAtTime(.012,t+.025);
-        gain.gain.exponentialRampToValueAtTime(.0001,t+.21);
-        osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
-        osc.start(t);osc.stop(t+.23);
-      }
+    petaraCelebrationAudio = new Audio("assets/audio/success-cheer.mp3.mp3");
+    petaraCelebrationAudio.volume = 1;
+    petaraCelebrationAudio.play().catch(error => {
+      console.log("Success audio playback unavailable", error);
     });
-  } catch(e) { console.log("Success audio unavailable",e); }
+  } catch (error) {
+    console.log("Success audio unavailable", error);
+  }
 }
 
 function celebrateAnswer() {
