@@ -2464,6 +2464,71 @@ function advance() {
 
 
 // =====================================================
+// MISSION CELEBRATION — cheerful "Yeah!" and fireworks
+// Plays only after every question in a mission is completed.
+// =====================================================
+function celebrateMission() {
+  // Keep mission audio and microphone feedback separate.
+  try {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const cheer = new SpeechSynthesisUtterance("Yeah!");
+      cheer.lang = "en-US";
+      cheer.rate = 1.08;
+      cheer.pitch = 1.35;
+      cheer.volume = 0.85;
+      window.speechSynthesis.speak(cheer);
+    }
+  } catch (e) {
+    console.log("Celebration voice unavailable.", e);
+  }
+
+  const overlay = document.createElement("div");
+  overlay.setAttribute("aria-hidden", "true");
+  Object.assign(overlay.style, {
+    position: "fixed", inset: "0", zIndex: "9999",
+    pointerEvents: "none", overflow: "hidden"
+  });
+  const colors = ["#ffda4e", "#ff6392", "#70e4ff", "#94f06b", "#bfa0ff", "#ffffff"];
+  const reducedMotion = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reducedMotion) {
+    const style = document.createElement("style");
+    style.textContent = `@keyframes petaraFirework {
+      0% { transform: translate(-50%,-50%) scale(.3); opacity: 1; }
+      75% { opacity: 1; }
+      100% { transform: translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.85); opacity: 0; }
+    }`;
+    overlay.appendChild(style);
+    const bursts = [
+      [26, 28, 0], [72, 30, 180], [50, 48, 390],
+      [18, 62, 570], [83, 61, 760]
+    ];
+    bursts.forEach(([x,y,delay],index) => {
+      for (let i=0; i<22; i++) {
+        const particle = document.createElement("span");
+        const angle = 2*Math.PI*i/22;
+        const radius = 65 + (i%4)*17;
+        Object.assign(particle.style, {
+          position:"absolute", left:x+"%", top:y+"%",
+          width:(i%3===0?9:6)+"px", height:(i%3===0?9:6)+"px",
+          borderRadius:i%4===0?"2px":"50%",
+          background:colors[(i+index)%colors.length],
+          boxShadow:"0 0 7px "+colors[(i+index)%colors.length],
+          "--dx":Math.cos(angle)*radius+"px",
+          "--dy":Math.sin(angle)*radius+"px",
+          opacity:"0",
+          animation:`petaraFirework 1050ms ease-out ${delay}ms forwards`
+        });
+        overlay.appendChild(particle);
+      }
+    });
+  }
+  document.body.appendChild(overlay);
+  window.setTimeout(() => overlay.remove(), 2400);
+}
+
+// =====================================================
 // COMPLETE CHECKPOINT
 // =====================================================
 
@@ -2512,6 +2577,8 @@ function completeCP(id) {
   updateHUD();
 
   refreshCheckpointGraphics();
+
+  celebrateMission();
 
   activityArea.innerHTML = `
 
