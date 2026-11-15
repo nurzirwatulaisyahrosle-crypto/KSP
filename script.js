@@ -71,6 +71,130 @@ const activityArea = document.querySelector("#activityArea");
 const interactBtn = document.querySelector("#interactBtn");
 const resultModal = document.querySelector("#resultModal");
 
+
+// =====================================================
+// PeTaRa HAPPY KIDS ADVENTURE — original melody (Web Audio)
+// Background music plays outside missions; no external audio file needed.
+// =====================================================
+const petaraMusic = (() => {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  let ctx = null;
+  let master = null;
+  let timer = null;
+  let step = 0;
+  let nextTime = 0;
+  let enabled = true;
+  let suspendedForMission = false;
+  const beat = 60 / 116;
+  const melody = [
+    ["G5","E5","G5","C6","B5","G5","E5","G5"],
+    ["A5","G5","E5","D5","E5","G5","A5","G5"],
+    ["A5","F5","A5","C6","A5","G5","F5","E5"],
+    ["G5","E5","D5","G5","E5","D5","C5","E5"],
+    ["G5","E5","G5","C6","D6","C6","B5","G5"],
+    ["A5","C6","A5","G5","E5","G5","A5","C6"],
+    ["B5","G5","B5","D6","C6","B5","G5","D5"],
+    ["E5","G5","C6","G5","E5","D5","C5","G5"]
+  ];
+  const chords = [
+    ["C3","C4","E4","G4"], ["A3","A3","C4","E4"],
+    ["F3","F3","A3","C4"], ["G3","G3","B3","D4"],
+    ["C3","C4","E4","G4"], ["F3","F3","A3","C4"],
+    ["G3","G3","B3","D4"], ["C3","C4","E4","G4"]
+  ];
+  const semitones = { C:0,D:2,E:4,F:5,G:7,A:9,B:11 };
+  function frequency(note) {
+    const match = /^([A-G])(\\d)$/.exec(note);
+    if (!match) return 0;
+    const midi = (Number(match[2])+1)*12 + semitones[match[1]];
+    return 440*Math.pow(2,(midi-69)/12);
+  }
+  function note(name, when, length, volume, type) {
+    if (!ctx || !master) return;
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = type || "sine";
+    oscillator.frequency.value = frequency(name);
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(volume, when + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + length);
+    oscillator.connect(gain);
+    gain.connect(master);
+    oscillator.start(when);
+    oscillator.stop(when + length + 0.02);
+  }
+  function schedule() {
+    if (!ctx || !enabled || suspendedForMission) return;
+    while (nextTime < ctx.currentTime + 0.2) {
+      const bar = Math.floor(step / 8) % 8;
+      const sub = step % 8;
+      note(melody[bar][sub],nextTime,beat*.37,.12,"sine");
+      if (sub % 2 === 0) {
+        note(chords[bar][1 + (sub/2)%3],nextTime,beat*.65,.045,"sine");
+      }
+      if (sub === 0) note(chords[bar][0],nextTime,beat*3.7,.045,"sine");
+      step = (step + 1) % 64;
+      nextTime += beat / 2;
+    }
+  }
+  function setup() {
+    if (!AudioContextClass) return false;
+    if (!ctx) {
+      ctx = new AudioContextClass();
+      master = ctx.createGain();
+      master.gain.value = 0.22;
+      master.connect(ctx.destination);
+    }
+    return true;
+  }
+  function play() {
+    if (!enabled || suspendedForMission || !setup()) return;
+    ctx.resume().then(() => {
+      if (!enabled || suspendedForMission || timer) return;
+      nextTime = ctx.currentTime + .06;
+      timer = setInterval(schedule, 70);
+      schedule();
+    }).catch(() => {});
+  }
+  function pause() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    if (ctx && ctx.state === "running") ctx.suspend().catch(() => {});
+  }
+  function mission(open) {
+    suspendedForMission = open;
+    if (open) pause();
+    else play();
+  }
+  function toggle() {
+    enabled = !enabled;
+    if (enabled) play(); else pause();
+    button.textContent = enabled ? "🎵 Muzik ON" : "🔇 Muzik OFF";
+    button.setAttribute("aria-pressed", String(enabled));
+  }
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "🎵 Muzik ON";
+  button.setAttribute("aria-label","Hidupkan atau matikan muzik latar");
+  button.setAttribute("aria-pressed","true");
+  Object.assign(button.style,{
+    position:"fixed",top:"12px",right:"12px",zIndex:"10000",
+    padding:"8px 12px",borderRadius:"18px",border:"2px solid #fff",
+    background:"#186b86",color:"#fff",fontWeight:"bold",
+    fontSize:"13px",cursor:"pointer",boxShadow:"0 2px 6px #0005"
+  });
+  button.addEventListener("click",toggle);
+  document.body.appendChild(button);
+  // Browsers, including iPadOS, require a user gesture to start audio.
+  document.addEventListener("pointerdown", () => {
+    if (!ctx && enabled && !suspendedForMission) play();
+  }, { passive:true });
+  document.addEventListener("keydown", () => {
+    if (!ctx && enabled && !suspendedForMission) play();
+  });
+  return { play, pause, mission };
+})();
+
 // =====================================================
 // START GAME
 // =====================================================
@@ -513,6 +637,7 @@ function interact() {
   modalTitle.textContent =
     `Misi ${target.id}`;
 
+  petaraMusic.mission(true);
   modal.classList.remove("hidden");
 
   keys.clear();
@@ -531,6 +656,7 @@ document
     stopRecognition(true);
 
     modal.classList.add("hidden");
+    petaraMusic.mission(false);
   });
 
 // =====================================================
@@ -2428,6 +2554,7 @@ function completeCP(id) {
     modal.classList.add(
       "hidden"
     );
+    petaraMusic.mission(false);
 
     game.modalCheckpoint =
       null;
