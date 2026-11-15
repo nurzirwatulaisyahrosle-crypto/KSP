@@ -2434,12 +2434,23 @@ function advance() {
 
   stopSpeech();
 
-  stopRecognition(true);
-
   const id =
     game.modalCheckpoint;
 
   if (!id) return;
+
+  // Misi 3: selepas onend menilai jawapan, sesi lama sudah ditutup.
+  // Jangan panggil stop() sekali lagi pada sesi yang sudah tamat.
+  if (id === 3 && !recognition) {
+    recognitionSession++;
+    recognitionShouldStop = false;
+    recognitionEvaluated = false;
+    finalTranscript = "";
+    interimTranscript = "";
+    isRecording = false;
+  } else {
+    stopRecognition(true);
+  }
 
   celebrateAnswer();
 
