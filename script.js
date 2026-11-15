@@ -22,9 +22,9 @@ const game = {
 // =====================================================
 
 const checkpoints = [
-  { id: 1, x: 630, y: 520, label: "Misi 1" },
-  { id: 2, x: 790, y: 745, label: "Misi 2" },
-  { id: 3, x: 1000, y: 520, label: "Misi 3" },
+  { id: 1, x: 630, y: 545, label: "Misi 1" },
+  { id: 2, x: 360, y: 605, label: "Misi 2" },
+  { id: 3, x: 1080, y: 555, label: "Misi 3" },
   { id: 4, x: 455, y: 205, label: "Misi 4" },
   { id: 5, x: 1190, y: 240, label: "Misi 5" }
 ];
