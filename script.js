@@ -2425,6 +2425,8 @@ function advance() {
 
   if (!id) return;
 
+  celebrateAnswer();
+
   /*
     CP4 memberikan 10 markah selepas
     keseluruhan misi selesai.
@@ -2466,68 +2468,108 @@ function advance() {
 
 
 // =====================================================
-// MISSION CELEBRATION — cheerful "Yeah!" and fireworks
-// Plays only after every question in a mission is completed.
+// ANSWER CELEBRATION — applause, cheerful crowd and star rain
+// Triggered for each correct answer, including the final question.
 // =====================================================
-function celebrateMission() {
-  // Keep mission audio and microphone feedback separate.
+let petaraCelebrationAudio = null;
+function playSuccessCheer() {
   try {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const cheer = new SpeechSynthesisUtterance("Yeah!");
-      cheer.lang = "en-US";
-      cheer.rate = 1.08;
-      cheer.pitch = 1.35;
-      cheer.volume = 0.85;
-      window.speechSynthesis.speak(cheer);
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!petaraCelebrationAudio) petaraCelebrationAudio = new AC();
+    const ctx = petaraCelebrationAudio;
+    ctx.resume().catch(() => {});
+    const start = ctx.currentTime + .02;
+    const sampleRate = ctx.sampleRate;
+    // Soft, layered applause: short filtered noise bursts.
+    const buffer = ctx.createBuffer(1, Math.round(sampleRate*.12), sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/sampleRate*33);
+    for (let i=0;i<35;i++) {
+      const src=ctx.createBufferSource();
+      const filter=ctx.createBiquadFilter();
+      const gain=ctx.createGain();
+      src.buffer=buffer;
+      filter.type="bandpass";
+      filter.frequency.value=850+(i%7)*210;
+      filter.Q.value=.75;
+      gain.gain.value=.038+(i%4)*.009;
+      src.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+      src.start(start+i*.044+Math.random()*.025);
     }
-  } catch (e) {
-    console.log("Celebration voice unavailable.", e);
-  }
-
-  const overlay = document.createElement("div");
-  overlay.setAttribute("aria-hidden", "true");
-  Object.assign(overlay.style, {
-    position: "fixed", inset: "0", zIndex: "9999",
-    pointerEvents: "none", overflow: "hidden"
-  });
-  const colors = ["#ffda4e", "#ff6392", "#70e4ff", "#94f06b", "#bfa0ff", "#ffffff"];
-  const reducedMotion = window.matchMedia &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!reducedMotion) {
-    const style = document.createElement("style");
-    style.textContent = `@keyframes petaraFirework {
-      0% { transform: translate(-50%,-50%) scale(.3); opacity: 1; }
-      75% { opacity: 1; }
-      100% { transform: translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.85); opacity: 0; }
-    }`;
-    overlay.appendChild(style);
-    const bursts = [
-      [26, 28, 0], [72, 30, 180], [50, 48, 390],
-      [18, 62, 570], [83, 61, 760]
-    ];
-    bursts.forEach(([x,y,delay],index) => {
-      for (let i=0; i<22; i++) {
-        const particle = document.createElement("span");
-        const angle = 2*Math.PI*i/22;
-        const radius = 65 + (i%4)*17;
-        Object.assign(particle.style, {
-          position:"absolute", left:x+"%", top:y+"%",
-          width:(i%3===0?9:6)+"px", height:(i%3===0?9:6)+"px",
-          borderRadius:i%4===0?"2px":"50%",
-          background:colors[(i+index)%colors.length],
-          boxShadow:"0 0 7px "+colors[(i+index)%colors.length],
-          "--dx":Math.cos(angle)*radius+"px",
-          "--dy":Math.sin(angle)*radius+"px",
-          opacity:"0",
-          animation:`petaraFirework 1050ms ease-out ${delay}ms forwards`
-        });
-        overlay.appendChild(particle);
+    // Several overlapping happy voices, pitched like a small cheering crowd.
+    const syllables=[0, .16, .31, .49, .66];
+    syllables.forEach((offset,k)=>{
+      for(let v=0;v<5;v++){
+        const osc=ctx.createOscillator();
+        const gain=ctx.createGain();
+        const filter=ctx.createBiquadFilter();
+        const t=start+offset+v*.018;
+        osc.type="sawtooth";
+        const base=205+v*36+k*13;
+        osc.frequency.setValueAtTime(base,t);
+        osc.frequency.exponentialRampToValueAtTime(base*1.23,t+.13);
+        filter.type="lowpass";filter.frequency.value=760+v*130;
+        gain.gain.setValueAtTime(.0001,t);
+        gain.gain.exponentialRampToValueAtTime(.012,t+.025);
+        gain.gain.exponentialRampToValueAtTime(.0001,t+.21);
+        osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+        osc.start(t);osc.stop(t+.23);
       }
     });
+  } catch(e) { console.log("Success audio unavailable",e); }
+}
+
+function celebrateAnswer() {
+  playSuccessCheer();
+  const overlay=document.createElement("div");
+  overlay.setAttribute("aria-hidden","true");
+  Object.assign(overlay.style,{
+    position:"fixed",inset:"0",zIndex:"9999",
+    overflow:"hidden",pointerEvents:"none"
+  });
+  const style=document.createElement("style");
+  style.textContent=`@keyframes petaraStarRain {
+    0% {transform:translate3d(0,-20vh,0) rotate(0deg) scale(.7);opacity:0}
+    12% {opacity:1}
+    85% {opacity:1}
+    100% {transform:translate3d(var(--drift),115vh,0) rotate(var(--spin)) scale(1.15);opacity:0}
+  }
+  @keyframes petaraStarPop {
+    0% {transform:translate(-50%,-50%) scale(.25);opacity:0}
+    30% {transform:translate(-50%,-50%) scale(1.15);opacity:1}
+    100% {transform:translate(-50%,-50%) scale(.9);opacity:0}
+  }`;
+  overlay.appendChild(style);
+  const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!reduced){
+    const colors=["#ffe74f","#ff9de2","#81efff","#a7ff83","#ffffff","#ffc76b"];
+    for(let i=0;i<85;i++){
+      const star=document.createElement("span");
+      star.textContent=i%6===0?"✦":"★";
+      const size=18+(i%5)*7;
+      Object.assign(star.style,{
+        position:"absolute",left:(i*37.7%100)+"%",top:"-15%",
+        fontSize:size+"px",lineHeight:"1",
+        color:colors[i%colors.length],
+        textShadow:"0 0 9px #fff9,0 0 15px currentColor",
+        "--drift":((i%9)-4)*17+"px",
+        "--spin":((i%2)?360:-360)+"deg",
+        animation:`petaraStarRain ${1.5+(i%5)*.15}s linear ${(i%13)*.075}s forwards`
+      });
+      overlay.appendChild(star);
+    }
+    const center=document.createElement("div");
+    center.textContent="🌟";
+    Object.assign(center.style,{
+      position:"absolute",left:"50%",top:"44%",fontSize:"clamp(75px,18vw,150px)",
+      filter:"drop-shadow(0 0 18px #ffe85b)",
+      animation:"petaraStarPop 1.2s ease-out forwards"
+    });
+    overlay.appendChild(center);
   }
   document.body.appendChild(overlay);
-  window.setTimeout(() => overlay.remove(), 2400);
+  window.setTimeout(()=>overlay.remove(),2900);
 }
 
 // =====================================================
@@ -2579,8 +2621,6 @@ function completeCP(id) {
   updateHUD();
 
   refreshCheckpointGraphics();
-
-  celebrateMission();
 
   activityArea.innerHTML = `
 
