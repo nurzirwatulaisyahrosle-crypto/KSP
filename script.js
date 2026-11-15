@@ -1444,6 +1444,12 @@ function renderVoice(
   isCP5 = false
 ) {
 
+  // Pastikan Soalan 2 Misi 3 tidak mewarisi mod audio panggilan
+  // daripada sesi mikrofon Soalan 1.
+  if (game.modalCheckpoint === 3) {
+    setAudioPlaybackMode();
+  }
+
   const audioText =
     isCP5
       ? "🔊 DENGAR AYAT"
@@ -1738,16 +1744,20 @@ function startRecognition(
   }
 
 
-  // Pastikan tiada recognition lama tertinggal
-  if (recognition) {
+  // Pada iPhone, jangan buka sesi mikrofon baharu ketika sesi lama
+  // masih aktif; tunggu onend supaya WebKit melepaskan mikrofon.
+  if (game.modalCheckpoint === 3 && recognition) {
+    setStatus("⏳ Mikrofon sedang ditutup. Cuba tekan MULA RAKAM sebentar lagi.");
+    return;
+  }
 
+  // Tingkah laku asal Misi 4 dan 5 dikekalkan.
+  if (recognition) {
     try {
       recognition.abort();
     } catch (e) {}
-
     recognition = null;
   }
-
 
   stopSpeech();
 
@@ -1998,14 +2008,15 @@ function startRecognition(
 
  r.onend = () => {
 
-    // Mic sudah tamat → pulangkan audio iPhone/iPad ke mod media
-    setAudioPlaybackMode();
-
+    // Abaikan sesi lama supaya tidak menukar audio sesi baharu.
     if (
       thisSession !== recognitionSession
     ) {
       return;
     }
+
+    // Kembalikan audio iPhone ke mod media selepas rakaman tamat.
+    setAudioPlaybackMode();
 
 
     if (recognition === r) {
