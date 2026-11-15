@@ -2522,54 +2522,61 @@ function playSuccessCheer() {
 
 function celebrateAnswer() {
   playSuccessCheer();
-  const overlay=document.createElement("div");
-  overlay.setAttribute("aria-hidden","true");
-  Object.assign(overlay.style,{
-    position:"fixed",inset:"0",zIndex:"9999",
-    overflow:"hidden",pointerEvents:"none"
+  const overlay = document.createElement("div");
+  overlay.setAttribute("aria-hidden", "true");
+  Object.assign(overlay.style, {
+    position: "fixed", inset: "0", zIndex: "9999",
+    overflow: "hidden", pointerEvents: "none"
   });
-  const style=document.createElement("style");
-  style.textContent=`@keyframes petaraStarRain {
-    0% {transform:translate3d(0,-20vh,0) rotate(0deg) scale(.7);opacity:0}
-    12% {opacity:1}
-    85% {opacity:1}
-    100% {transform:translate3d(var(--drift),115vh,0) rotate(var(--spin)) scale(1.15);opacity:0}
+  const style = document.createElement("style");
+  style.textContent = `@keyframes petaraStarRain {
+    0% { transform:translate3d(0,-35px,0) rotate(0deg) scale(.5); opacity:0 }
+    12% { opacity:1 }
+    85% { opacity:1 }
+    100% { transform:translate3d(var(--drift),110vh,0) rotate(var(--spin)) scale(.85); opacity:0 }
   }
   @keyframes petaraStarPop {
-    0% {transform:translate(-50%,-50%) scale(.25);opacity:0}
-    30% {transform:translate(-50%,-50%) scale(1.15);opacity:1}
-    100% {transform:translate(-50%,-50%) scale(.9);opacity:0}
+    0% { transform:translate(-50%,-50%) scale(.3); opacity:0 }
+    35% { transform:translate(-50%,-50%) scale(1.2); opacity:1 }
+    100% { transform:translate(-50%,-50%) scale(1); opacity:1 }
   }`;
   overlay.appendChild(style);
-  const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(!reduced){
-    const colors=["#ffe74f","#ff9de2","#81efff","#a7ff83","#ffffff","#ffc76b"];
-    for(let i=0;i<85;i++){
-      const star=document.createElement("span");
-      star.textContent=i%6===0?"✦":"★";
-      const size=18+(i%5)*7;
-      Object.assign(star.style,{
-        position:"absolute",left:(i*37.7%100)+"%",top:"-15%",
-        fontSize:size+"px",lineHeight:"1",
-        color:colors[i%colors.length],
-        textShadow:"0 0 9px #fff9,0 0 15px currentColor",
-        "--drift":((i%9)-4)*17+"px",
-        "--spin":((i%2)?360:-360)+"deg",
-        animation:`petaraStarRain ${1.5+(i%5)*.15}s linear ${(i%13)*.075}s forwards`
+  const reduced = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduced) {
+    const symbols = ["⭐", "🌟", "✦", "✧", "✨"];
+    for (let i = 0; i < 115; i++) {
+      const star = document.createElement("span");
+      star.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      Object.assign(star.style, {
+        position: "absolute",
+        left: (Math.random() * 100) + "%",
+        top: "-40px",
+        fontSize: (10 + Math.random() * 23) + "px",
+        lineHeight: "1",
+        filter: "drop-shadow(0 0 5px #ffd24a)",
+        "--drift": (Math.random() * 170 - 85) + "px",
+        "--spin": (Math.random() * 900 - 450) + "deg",
+        animation: `petaraStarRain ${1.5 + Math.random() * 1.5}s linear ${Math.random() * .95}s forwards`
       });
       overlay.appendChild(star);
     }
-    const center=document.createElement("div");
-    center.textContent="🌟";
-    Object.assign(center.style,{
-      position:"absolute",left:"50%",top:"44%",fontSize:"clamp(75px,18vw,150px)",
-      filter:"drop-shadow(0 0 18px #ffe85b)",
-      animation:"petaraStarPop 1.2s ease-out forwards"
-    });
-    overlay.appendChild(center);
   }
+  const message = document.createElement("div");
+  message.innerHTML = '⭐ SYABAS! ⭐<div style="font-size:clamp(15px,3vw,20px);margin-top:8px">Jawapan kamu betul!</div>';
+  Object.assign(message.style, {
+    position: "absolute", top: "50%", left: "50%",
+    transform: "translate(-50%,-50%)", textAlign: "center",
+    color: "white", fontFamily: "system-ui,sans-serif",
+    fontWeight: "900", fontSize: "clamp(27px,6vw,46px)",
+    textShadow: "0 3px 7px #000,0 0 12px #ffcf45",
+    whiteSpace: "nowrap", animation: "petaraStarPop .55s ease-out",
+    background: "#19385a99", padding: "14px 22px", borderRadius: "18px"
+  });
+  overlay.appendChild(message);
   document.body.appendChild(overlay);
-  window.setTimeout(()=>overlay.remove(),2900);
+  window.setTimeout(() => { message.style.transition = "opacity .2s"; message.style.opacity = "0"; }, 2500);
+  window.setTimeout(() => overlay.remove(), 3200);
 }
 
 // =====================================================
