@@ -2534,7 +2534,7 @@ function celebrateAnswer() {
     }
   }
   const message = document.createElement("div");
-  message.innerHTML = '⭐ SYABAS! ⭐<div style="font-size:clamp(15px,3vw,20px);margin-top:8px">Jawapan kamu betul!</div>';
+  message.innerHTML = '⭐ SYABAS! ⭐<div style="font-size:clamp(15px,3vw,20px);margin-top:8px">Jawapan anda tepat!</div>';
   Object.assign(message.style, {
     position: "absolute", top: "50%", left: "50%",
     transform: "translate(-50%,-50%)", textAlign: "center",
