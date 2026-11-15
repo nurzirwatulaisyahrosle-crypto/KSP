@@ -2471,21 +2471,10 @@ function advance() {
 // ANSWER CELEBRATION — applause, cheerful crowd and star rain
 // Triggered for each correct answer, including the final question.
 // =====================================================
-let petaraCelebrationAudio = null;
+// Success sound disabled at the user's request.
+// Keep the visual celebration without playing any success audio.
 function playSuccessCheer() {
-  try {
-    if (petaraCelebrationAudio) {
-      petaraCelebrationAudio.pause();
-      petaraCelebrationAudio.currentTime = 0;
-    }
-    petaraCelebrationAudio = new Audio("assets/audio/success-cheer.mp3.mp3");
-    petaraCelebrationAudio.volume = 1;
-    petaraCelebrationAudio.play().catch(error => {
-      console.log("Success audio playback unavailable", error);
-    });
-  } catch (error) {
-    console.log("Success audio unavailable", error);
-  }
+  // Intentionally silent.
 }
 
 function celebrateAnswer() {
