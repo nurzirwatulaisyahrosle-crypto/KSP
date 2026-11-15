@@ -104,7 +104,7 @@ const petaraMusic = (() => {
   ];
   const semitones = { C:0,D:2,E:4,F:5,G:7,A:9,B:11 };
   function frequency(note) {
-    const match = /^([A-G])(\\d)$/.exec(note);
+    const match = /^([A-G])(\d)$/.exec(note);
     if (!match) return 0;
     const midi = (Number(match[2])+1)*12 + semitones[match[1]];
     return 440*Math.pow(2,(midi-69)/12);
@@ -215,6 +215,7 @@ function startGame() {
   playerName.textContent = name;
 
   startScreen.classList.add("hidden");
+  petaraMusic.play();
 
   if (prepScreen) {
     prepScreen.classList.remove("hidden");
@@ -407,6 +408,7 @@ function enterWorld() {
 
   startScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
+  petaraMusic.play();
 
   createCheckpoints();
   updateHUD();
