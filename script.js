@@ -2477,7 +2477,7 @@ let petaraSuccessAudio = null;
 function playSuccessCheer() {
   try {
     if (!petaraSuccessAudio) {
-      petaraSuccessAudio = new Audio("assets/audio/success-cheer.mp3.mp3");
+      petaraSuccessAudio = new Audio("assets/audio/kids_cheering.mp3");
       petaraSuccessAudio.preload = "auto";
       petaraSuccessAudio.volume = 1;
     }
