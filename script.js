@@ -1756,20 +1756,16 @@ function startRecognition(
   }
 
 
-  // Pada iPhone, jangan buka sesi mikrofon baharu ketika sesi lama
-  // masih aktif; tunggu onend supaya WebKit melepaskan mikrofon.
-  if ((game.modalCheckpoint === 3 || (game.modalCheckpoint === 4 && activityIndex === 0)) && recognition) {
-    setStatus("⏳ Mikrofon sedang ditutup. Cuba tekan MULA RAKAM sebentar lagi.");
-    return;
-  }
-
-  // Tingkah laku asal Misi 5 dan Misi 4 Soalan 2 dikekalkan.
+  // Pastikan tiada recognition lama tertinggal
   if (recognition) {
+
     try {
       recognition.abort();
     } catch (e) {}
+
     recognition = null;
   }
+
 
   stopSpeech();
 
@@ -1793,9 +1789,8 @@ function startRecognition(
     recognitionSession;
 
 
-  // iPhone: sediakan mod mikrofon sebelum rakaman Misi 3
-  // dan Misi 4 Soalan 1, tanpa mengubah playback yang telah dibaiki.
-  if (game.modalCheckpoint === 3 || (game.modalCheckpoint === 4 && activityIndex === 0)) {
+  // Kekalkan mod audio iPhone yang telah menyelesaikan isu earpiece Misi 3.
+  if (game.modalCheckpoint === 3) {
     setMission3RecordingMode();
   }
 
@@ -2026,23 +2021,22 @@ function startRecognition(
 
  r.onend = () => {
 
-    // Abaikan sesi lama supaya tidak menukar audio sesi baharu.
+    // Mic sudah tamat → pulangkan audio iPhone/iPad ke mod media
+    setAudioPlaybackMode();
+
     if (
       thisSession !== recognitionSession
     ) {
       return;
     }
 
-    // Lepaskan rujukan sesi lama dahulu sebelum memulihkan audio.
+
     if (recognition === r) {
       recognition = null;
     }
 
-    isRecording = false;
 
-    // Pada Misi 3, hanya pulihkan playback selepas sesi rakaman ditutup.
-    // Misi lain mengekalkan tingkah laku audio asal.
-    setAudioPlaybackMode();
+    isRecording = false;
     setRecordButton(false);
 
     setMicIndicator(
@@ -2112,11 +2106,8 @@ try {
     );
 
     setStatus(
-      game.modalCheckpoint === 3
-        ? "⚠️ Mikrofon gagal dimulakan. Tekan MULA RAKAM sekali lagi."
-        : "🎤 Tekan MULA RAKAM sekali lagi."
+      "🎤 Tekan MULA RAKAM sekali lagi."
     );
-    console.log("SpeechRecognition start error", err);
   }
 }
 
@@ -2435,23 +2426,12 @@ function advance() {
 
   stopSpeech();
 
+  stopRecognition(true);
+
   const id =
     game.modalCheckpoint;
 
   if (!id) return;
-
-  // Misi 3: selepas onend menilai jawapan, sesi lama sudah ditutup.
-  // Jangan panggil stop() sekali lagi pada sesi yang sudah tamat.
-  if (id === 3 && !recognition) {
-    recognitionSession++;
-    recognitionShouldStop = false;
-    recognitionEvaluated = false;
-    finalTranscript = "";
-    interimTranscript = "";
-    isRecording = false;
-  } else {
-    stopRecognition(true);
-  }
 
   celebrateAnswer();
 
