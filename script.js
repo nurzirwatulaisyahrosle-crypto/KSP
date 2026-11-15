@@ -1758,12 +1758,12 @@ function startRecognition(
 
   // Pada iPhone, jangan buka sesi mikrofon baharu ketika sesi lama
   // masih aktif; tunggu onend supaya WebKit melepaskan mikrofon.
-  if (game.modalCheckpoint === 3 && recognition) {
+  if ((game.modalCheckpoint === 3 || (game.modalCheckpoint === 4 && activityIndex === 0)) && recognition) {
     setStatus("⏳ Mikrofon sedang ditutup. Cuba tekan MULA RAKAM sebentar lagi.");
     return;
   }
 
-  // Tingkah laku asal Misi 4 dan 5 dikekalkan.
+  // Tingkah laku asal Misi 5 dan Misi 4 Soalan 2 dikekalkan.
   if (recognition) {
     try {
       recognition.abort();
@@ -1793,8 +1793,9 @@ function startRecognition(
     recognitionSession;
 
 
-  // iPhone: tukar mod audio sebelum sesi pengecaman suara dibuka.
-  if (game.modalCheckpoint === 3) {
+  // iPhone: sediakan mod mikrofon sebelum rakaman Misi 3
+  // dan Misi 4 Soalan 1, tanpa mengubah playback yang telah dibaiki.
+  if (game.modalCheckpoint === 3 || (game.modalCheckpoint === 4 && activityIndex === 0)) {
     setMission3RecordingMode();
   }
 
