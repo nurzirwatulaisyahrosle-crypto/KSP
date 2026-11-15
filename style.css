@@ -638,8 +638,8 @@ button {
 .checkpoint {
   position: absolute;
 
-  width: 105px;
-  height: 110px;
+  width: 136.5px;
+  height: 143px;
 
   transform:
     translate(-50%, -85%);
@@ -1498,9 +1498,9 @@ button {
   }
 
   .checkpoint {
-    width: 90px;
+    width: 117px;
 
-    height: 96px;
+    height: 124.8px;
   }
 
   #dpad {
@@ -1681,9 +1681,9 @@ and (max-width: 700px) {
   }
 
   .checkpoint {
-    width: 82px;
+    width: 106.6px;
 
-    height: 88px;
+    height: 114.4px;
   }
 
   #player {
