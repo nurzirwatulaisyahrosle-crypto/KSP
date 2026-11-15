@@ -2473,8 +2473,22 @@ function advance() {
 // =====================================================
 // Success sound disabled at the user's request.
 // Keep the visual celebration without playing any success audio.
+let petaraSuccessAudio = null;
 function playSuccessCheer() {
-  // Intentionally silent.
+  try {
+    if (!petaraSuccessAudio) {
+      petaraSuccessAudio = new Audio("assets/audio/success-cheer.mp3.mp3");
+      petaraSuccessAudio.preload = "auto";
+      petaraSuccessAudio.volume = 1;
+    }
+    petaraSuccessAudio.pause();
+    petaraSuccessAudio.currentTime = 0;
+    petaraSuccessAudio.play().catch(error => {
+      console.log("Success audio playback unavailable", error);
+    });
+  } catch (error) {
+    console.log("Success audio unavailable", error);
+  }
 }
 
 function celebrateAnswer() {
