@@ -990,6 +990,18 @@ let currentAudio = null;
 // IOS / IPADOS AUDIO SESSION
 // =====================================================
 
+// Misi 3 (iOS): letakkan audio dalam mod yang membenarkan mikrofon
+// sebelum Web Speech membuka sesi rakaman.
+function setMission3RecordingMode() {
+  try {
+    if (navigator.audioSession && "type" in navigator.audioSession) {
+      navigator.audioSession.type = "play-and-record";
+    }
+  } catch (error) {
+    console.log("Mod rakaman iOS tidak tersedia", error);
+  }
+}
+
 function setAudioPlaybackMode() {
 
   try {
@@ -1781,6 +1793,11 @@ function startRecognition(
     recognitionSession;
 
 
+  // iPhone: tukar mod audio sebelum sesi pengecaman suara dibuka.
+  if (game.modalCheckpoint === 3) {
+    setMission3RecordingMode();
+  }
+
   // Recognition BARU setiap kali tekan MULA RAKAM
   const r =
     new SR();
@@ -2015,16 +2032,16 @@ function startRecognition(
       return;
     }
 
-    // Kembalikan audio iPhone ke mod media selepas rakaman tamat.
-    setAudioPlaybackMode();
-
-
+    // Lepaskan rujukan sesi lama dahulu sebelum memulihkan audio.
     if (recognition === r) {
       recognition = null;
     }
 
-
     isRecording = false;
+
+    // Pada Misi 3, hanya pulihkan playback selepas sesi rakaman ditutup.
+    // Misi lain mengekalkan tingkah laku audio asal.
+    setAudioPlaybackMode();
     setRecordButton(false);
 
     setMicIndicator(
@@ -2094,8 +2111,11 @@ try {
     );
 
     setStatus(
-      "🎤 Tekan MULA RAKAM sekali lagi."
+      game.modalCheckpoint === 3
+        ? "⚠️ Mikrofon gagal dimulakan. Tekan MULA RAKAM sekali lagi."
+        : "🎤 Tekan MULA RAKAM sekali lagi."
     );
+    console.log("SpeechRecognition start error", err);
   }
 }
 
