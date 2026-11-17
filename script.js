@@ -1037,6 +1037,7 @@ function speak(src) {
   setAudioPlaybackMode();
 
   currentAudio = new Audio(src);
+  const audioForThisRequest = currentAudio;
 
   currentAudio.muted = false;
   currentAudio.volume = 1.0;
@@ -1047,7 +1048,8 @@ function speak(src) {
 
     function playAudio() {
 
-      if (!currentAudio) return;
+      // Jangan hidupkan semula audio lama selepas murid menekan RAKAM.
+      if (currentAudio !== audioForThisRequest) return;
 
       // Pastikan sekali lagi sebelum play
       setAudioPlaybackMode();
@@ -1720,6 +1722,14 @@ function startRecognition(
 
   stopSpeech();
 
+  // Hentikan sorakan yang mungkin masih dimainkan ketika Soalan 2 bermula.
+  // Audio media yang masih aktif boleh mengganggu pembukaan input iPhone.
+  if (petaraSuccessAudio) {
+    try {
+      petaraSuccessAudio.pause();
+      petaraSuccessAudio.currentTime = 0;
+    } catch (e) {}
+  }
 
   // Simpan soalan semasa
   currentVoiceData = d;
