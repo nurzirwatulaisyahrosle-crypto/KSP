@@ -1834,6 +1834,30 @@ function startRecognition(
   // START
   // ===================================================
 
+  r.onaudiostart = () => {
+    if (thisSession !== recognitionSession) return;
+    if (game.modalCheckpoint === 3) {
+      console.info("[PeTara M3] audio input started", { question: activityIndex + 1, session: thisSession });
+      setStatus("🎤 Input audio aktif. Sila bercakap.");
+      setMicIndicator(true, "🎤 Input audio aktif — sila bercakap");
+    }
+  };
+
+  r.onsoundstart = () => {
+    if (thisSession !== recognitionSession) return;
+    if (game.modalCheckpoint === 3) {
+      console.info("[PeTara M3] sound detected", { question: activityIndex + 1, session: thisSession });
+      setStatus("🔉 Bunyi diterima. Sedang mengenal pasti pertuturan...");
+    }
+  };
+
+  r.onaudioend = () => {
+    if (thisSession !== recognitionSession) return;
+    if (game.modalCheckpoint === 3) {
+      console.info("[PeTara M3] audio input ended", { question: activityIndex + 1, session: thisSession });
+    }
+  };
+
   r.onstart = () => {
 
     if (
@@ -1852,11 +1876,15 @@ function startRecognition(
 
     setMicIndicator(
       true,
-      "🎙️ Mikrofon aktif — sedang mendengar..."
+      game.modalCheckpoint === 3
+        ? "🎙️ Sesi bermula — menunggu input audio..."
+        : "🎙️ Mikrofon aktif — sedang mendengar..."
     );
 
     setStatus(
-      "Saya sedang mendengar..."
+      game.modalCheckpoint === 3
+        ? "⏳ Menunggu input audio daripada iPhone..."
+        : "Saya sedang mendengar..."
     );
   };
 
