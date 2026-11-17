@@ -1756,7 +1756,15 @@ function startRecognition(
   }
 
 
-  // Pastikan tiada recognition lama tertinggal
+  // Misi 3: jangan batalkan sesi iPhone yang masih ditutup.
+  // Tunggu onend sebelum mencipta SpeechRecognition baharu.
+  if (game.modalCheckpoint === 3 && recognition) {
+    setStatus("⏳ Sesi mikrofon sebelumnya belum tamat. Cuba sebentar lagi.");
+    console.info("[PeTara M3] previous recognition still active", { question: activityIndex + 1 });
+    return;
+  }
+
+  // Logik asal Misi 4 dan 5 dikekalkan.
   if (recognition) {
 
     try {
@@ -1834,6 +1842,10 @@ function startRecognition(
       return;
     }
 
+    if (game.modalCheckpoint === 3) {
+      console.info("[PeTara M3] recognition started", { question: activityIndex + 1, session: thisSession });
+    }
+
     isRecording = true;
 
     setRecordButton(true);
@@ -1861,6 +1873,10 @@ function startRecognition(
       return;
     }
 
+    if (game.modalCheckpoint === 3) {
+      console.info("[PeTara M3] speech detected", { question: activityIndex + 1, session: thisSession });
+    }
+
     setMicIndicator(
       true,
       "🗣️ Suara dikesan"
@@ -1884,6 +1900,9 @@ function startRecognition(
       return;
     }
 
+    if (game.modalCheckpoint === 3) {
+      console.info("[PeTara M3] recognition result received", { question: activityIndex + 1, session: thisSession });
+    }
 
     let finalText = "";
     let interimText = "";
@@ -1964,6 +1983,9 @@ function startRecognition(
       return;
     }
 
+    if (game.modalCheckpoint === 3) {
+      console.warn("[PeTara M3] recognition error", { question: activityIndex + 1, session: thisSession, code: event.error });
+    }
 
     if (
       event.error === "aborted"
@@ -2021,19 +2043,27 @@ function startRecognition(
 
  r.onend = () => {
 
-    // Mic sudah tamat → pulangkan audio iPhone/iPad ke mod media
-    setAudioPlaybackMode();
-
+    // Sesi lama tidak boleh menukar mod audio sesi baharu.
     if (
       thisSession !== recognitionSession
     ) {
       return;
     }
 
+    if (game.modalCheckpoint === 3) {
+      console.info("[PeTara M3] recognition ended", {
+        question: activityIndex + 1,
+        session: thisSession,
+        hadTranscript: Boolean((finalTranscript + interimTranscript).trim())
+      });
+    }
 
     if (recognition === r) {
       recognition = null;
     }
+
+    // Kekalkan pembaikan earpiece: playback selepas sesi ditutup.
+    setAudioPlaybackMode();
 
 
     isRecording = false;
@@ -2426,7 +2456,11 @@ function advance() {
 
   stopSpeech();
 
-  stopRecognition(true);
+  // onend Misi 3 sudah melepaskan sesi selepas jawapan dinilai.
+  // Jangan stop sekali lagi jika tiada sesi aktif.
+  if (game.modalCheckpoint !== 3 || recognition) {
+    stopRecognition(true);
+  }
 
   const id =
     game.modalCheckpoint;
