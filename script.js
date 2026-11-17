@@ -1561,58 +1561,9 @@ recordBtn.onclick = () => {
   }
 
 
-  // ===================================================
-  // MISI 5 SAHAJA — IOS / IPADOS
-  // ===================================================
-
-  if (isCP5) {
-
-    // Pastikan audio yang sedang bermain betul-betul berhenti
-    stopSpeech();
-
-    // Jika ada recognition lama yang masih tertinggal,
-    // tutup dahulu sebelum cipta recognition baru.
-    if (recognition) {
-
-      try {
-        recognition.abort();
-      } catch (e) {}
-
-      recognition = null;
-      isRecording = false;
-
-    }
-
-   // Reset transcript sesi sebelumnya
-finalTranscript = "";
-interimTranscript = "";
-
-// Jangan paksa playback untuk Misi 5 Soalan 1.
-if (!(isCP5 && activityIndex === 0)) {
-  setAudioPlaybackMode();
-}
-// Mulakan recognition baru untuk Misi 5.
-startRecognition(
-  d,
-  false,
-  true
-);
-
-return;
-  }
-
-
-  // ===================================================
-  // MISI 3 & MISI 4
-  // KEKALKAN CARA YANG SUDAH BERFUNGSI
-  // ===================================================
-
-  startRecognition(
-    d,
-    isCP4,
-    false
-  );
-
+  // Semua misi lisan menggunakan satu laluan rakaman.
+  // Jangan abort sesi iPhone secara paksa sebelum startRecognition.
+  startRecognition(d, isCP4, isCP5);
 };
 }
 
@@ -1756,24 +1707,16 @@ function startRecognition(
   }
 
 
-  // Misi 3: jangan batalkan sesi iPhone yang masih ditutup.
-  // Tunggu onend sebelum mencipta SpeechRecognition baharu.
-  if (game.modalCheckpoint === 3 && recognition) {
-    setStatus("⏳ Sesi mikrofon sebelumnya belum tamat. Cuba sebentar lagi.");
-    console.info("[PeTara M3] previous recognition still active", { question: activityIndex + 1 });
+  // Misi 3–5: jangan bertindih dengan sesi SpeechRecognition lama.
+  // Rujukan hanya dilepaskan dalam onend, selepas Safari menutupnya.
+  if (recognition) {
+    setStatus("⏳ Mikrofon sebelumnya sedang ditutup. Tunggu sebentar dan cuba lagi.");
+    console.info("[PeTara Voice] previous session still closing", {
+      mission: game.modalCheckpoint,
+      question: activityIndex + 1
+    });
     return;
   }
-
-  // Logik asal Misi 4 dan 5 dikekalkan.
-  if (recognition) {
-
-    try {
-      recognition.abort();
-    } catch (e) {}
-
-    recognition = null;
-  }
-
 
   stopSpeech();
 
@@ -1797,8 +1740,9 @@ function startRecognition(
     recognitionSession;
 
 
-  // Kekalkan mod audio iPhone yang telah menyelesaikan isu earpiece Misi 3.
-  if (game.modalCheckpoint === 3) {
+  // Gunakan mod rakaman iPhone yang sama untuk semua misi lisan.
+  // Audio soalan tetap menggunakan playback melalui fungsi speak().
+  if (game.modalCheckpoint >= 3 && game.modalCheckpoint <= 5) {
     setMission3RecordingMode();
   }
 
@@ -1866,8 +1810,8 @@ function startRecognition(
       return;
     }
 
-    if (game.modalCheckpoint === 3) {
-      console.info("[PeTara M3] recognition started", { question: activityIndex + 1, session: thisSession });
+    if (game.modalCheckpoint >= 3 && game.modalCheckpoint <= 5) {
+      console.info("[PeTara Voice] recognition started", { mission: game.modalCheckpoint, question: activityIndex + 1, session: thisSession });
     }
 
     isRecording = true;
@@ -2011,8 +1955,8 @@ function startRecognition(
       return;
     }
 
-    if (game.modalCheckpoint === 3) {
-      console.warn("[PeTara M3] recognition error", { question: activityIndex + 1, session: thisSession, code: event.error });
+    if (game.modalCheckpoint >= 3 && game.modalCheckpoint <= 5) {
+      console.warn("[PeTara Voice] recognition error", { mission: game.modalCheckpoint, question: activityIndex + 1, session: thisSession, code: event.error });
     }
 
     if (
@@ -2163,9 +2107,8 @@ try {
       "🎤 Mikrofon tidak aktif"
     );
 
-    setStatus(
-      "🎤 Tekan MULA RAKAM sekali lagi."
-    );
+    console.warn("[PeTara Voice] start failed", { mission: game.modalCheckpoint, question: activityIndex + 1, error: String(err) });
+    setStatus("⚠️ Rakaman gagal dimulakan. Cuba tekan MULA RAKAM sekali lagi.");
   }
 }
 
