@@ -657,6 +657,9 @@ document
     stopSpeech();
     stopRecognition(true);
 
+    // Tutup identiti misi supaya callback rakaman lama tidak
+    // memproses jawapan selepas murid menekan X.
+    game.modalCheckpoint = null;
     modal.classList.add("hidden");
     petaraMusic.mission(false);
   });
@@ -1748,6 +1751,8 @@ function startRecognition(
 
   const thisSession =
     recognitionSession;
+  const thisMission = game.modalCheckpoint;
+  const thisQuestion = activityIndex;
 
 
   // Gunakan mod rakaman iPhone yang sama untuk semua misi lisan.
@@ -2047,6 +2052,12 @@ function startRecognition(
     // Kekalkan pembaikan earpiece: playback selepas sesi ditutup.
     setAudioPlaybackMode();
 
+    // Callback lama tidak boleh menilai jawapan atau menulis pada
+    // soalan/misi baharu selepas pengguna menutup atau menukar skrin.
+    if (game.modalCheckpoint !== thisMission || activityIndex !== thisQuestion) {
+      console.info("[PeTara Voice] ignoring stale end event", { mission: thisMission, question: thisQuestion + 1 });
+      return;
+    }
 
     isRecording = false;
     setRecordButton(false);
@@ -2437,9 +2448,9 @@ function advance() {
 
   stopSpeech();
 
-  // onend Misi 3 sudah melepaskan sesi selepas jawapan dinilai.
-  // Jangan stop sekali lagi jika tiada sesi aktif.
-  if (game.modalCheckpoint !== 3 || recognition) {
+  // Jawapan lisan dinilai selepas onend melepaskan recognition.
+  // Jangan hentikan atau reset sesi yang sudah tamat sekali lagi.
+  if (recognition) {
     stopRecognition(true);
   }
 
