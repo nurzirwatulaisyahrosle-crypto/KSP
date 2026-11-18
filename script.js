@@ -950,6 +950,7 @@ function shell(title, total, body) {
 // =====================================================
 
 function renderActivity(id) {
+  stopSuccessCheer();
   stopSpeech();
   
 
@@ -1034,6 +1035,7 @@ function setAudioPlaybackMode() {
 
 function speak(src) {
 
+  stopSuccessCheer();
   stopSpeech();
 
   // Pastikan iPhone/iPad berada dalam mod media
@@ -1723,7 +1725,9 @@ function startRecognition(
     return;
   }
 
+  // Hentikan semua audio permainan sebelum meminta input mikrofon iPhone.
   stopSpeech();
+  stopSuccessCheer();
 
   // Hentikan sorakan yang mungkin masih dimainkan ketika Soalan 2 bermula.
   // Audio media yang masih aktif boleh mengganggu pembukaan input iPhone.
@@ -2496,7 +2500,7 @@ function advance() {
 
       }
     },
-    3300
+    2200
   );
 }
 
@@ -2508,6 +2512,15 @@ function advance() {
 // Success sound disabled at the user's request.
 // Keep the visual celebration without playing any success audio.
 let petaraSuccessAudio = null;
+let petaraCheerTimer = null;
+function stopSuccessCheer() {
+  if (petaraCheerTimer) clearTimeout(petaraCheerTimer);
+  petaraCheerTimer = null;
+  if (petaraSuccessAudio) {
+    petaraSuccessAudio.pause();
+    try { petaraSuccessAudio.currentTime = 0; } catch (e) {}
+  }
+}
 function playSuccessCheer() {
   try {
     if (!petaraSuccessAudio) {
@@ -2515,11 +2528,12 @@ function playSuccessCheer() {
       petaraSuccessAudio.preload = "auto";
       petaraSuccessAudio.volume = 1;
     }
-    petaraSuccessAudio.pause();
-    petaraSuccessAudio.currentTime = 0;
+    stopSuccessCheer();
     petaraSuccessAudio.play().catch(error => {
       console.log("Success audio playback unavailable", error);
     });
+    // Hadkan sorakan kepada 1.5 saat supaya tidak bertindih dengan mikrofon.
+    petaraCheerTimer = setTimeout(stopSuccessCheer, 1500);
   } catch (error) {
     console.log("Success audio unavailable", error);
   }
@@ -2580,8 +2594,8 @@ function celebrateAnswer() {
   });
   overlay.appendChild(message);
   document.body.appendChild(overlay);
-  window.setTimeout(() => { message.style.transition = "opacity .2s"; message.style.opacity = "0"; }, 2500);
-  window.setTimeout(() => overlay.remove(), 3200);
+  window.setTimeout(() => { message.style.transition = "opacity .2s"; message.style.opacity = "0"; }, 1700);
+  window.setTimeout(() => overlay.remove(), 2100);
 }
 
 // =====================================================
