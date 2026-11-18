@@ -2500,7 +2500,7 @@ function advance() {
 
       }
     },
-    2200
+    5000
   );
 }
 
@@ -2594,8 +2594,8 @@ function celebrateAnswer() {
   });
   overlay.appendChild(message);
   document.body.appendChild(overlay);
-  window.setTimeout(() => { message.style.transition = "opacity .2s"; message.style.opacity = "0"; }, 1700);
-  window.setTimeout(() => overlay.remove(), 2100);
+  window.setTimeout(() => { message.style.transition = "opacity .2s"; message.style.opacity = "0"; }, 4700);
+  window.setTimeout(() => overlay.remove(), 5000);
 }
 
 // =====================================================
